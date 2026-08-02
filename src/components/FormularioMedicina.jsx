@@ -1,13 +1,18 @@
 const dias = Array.from({ length: 31 }, (_, index) => index + 1);
 
-function FormularioMedicina({ datosFormulario, setDatosFormulario, onSubmit }) {
+function FormularioMedicina({
+  datosFormulario,
+  setDatosFormulario,
+  onSubmit,
+  fechaHoy,
+}) {
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit(datosFormulario);
       }}
-      className="space-y-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+      className="space-y-4 pb-5"
     >
       <div className="space-y-1">
         <label
@@ -97,6 +102,7 @@ function FormularioMedicina({ datosFormulario, setDatosFormulario, onSubmit }) {
           name="fechaInicio"
           type="date"
           value={datosFormulario.fechaInicio}
+          max={fechaHoy}
           onChange={(e) =>
             setDatosFormulario((prev) => ({
               ...prev,

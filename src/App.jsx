@@ -97,6 +97,14 @@ function App() {
     setMedicinas((prevMedicinas) =>
       prevMedicinas.map((medicina) => {
         if (medicina.id === id) {
+          const yaRegistrada = medicina.fechasCompletado.some(
+            (dosis) => dosis.dosis === tipoDosis && dosis.fecha === fecha,
+          );
+
+          if (yaRegistrada) {
+            return medicina;
+          }
+
           const nuevaDosis = {
             fecha,
             dosis: tipoDosis,
@@ -106,6 +114,13 @@ function App() {
           return {
             ...medicina,
             fechasCompletado: [...medicina.fechasCompletado, nuevaDosis],
+            horasDosis: {
+              ...medicina.horasDosis,
+              [tipoDosis]: {
+                hora: horaActual,
+                fecha: fechaHoy,
+              },
+            },
           };
         }
 
@@ -133,31 +148,75 @@ function App() {
     );
   };
 
+  const diasTranscurridosDesde = (fechaInicio) => {
+    const [anio, mes, dia] = fechaInicio.split("-").map(Number);
+    const inicio = new Date(anio, mes - 1, dia);
+    const [anioHoy, mesHoy, diaHoy] = fechaHoy.split("-").map(Number);
+    const hoy = new Date(anioHoy, mesHoy - 1, diaHoy);
+
+    const diferencia = hoy - inicio;
+
+    return Math.floor(diferencia / (1000 * 60 * 60 * 24));
+  };
+
+  const calcularDiaTratamiento = (fechaInicio, duracion) => {
+    const diasTranscurridos = diasTranscurridosDesde(fechaInicio);
+
+    return Math.min(Math.max(diasTranscurridos + 1, 1), duracion);
+  };
+
+  const tratamientoCompletado = (fechaInicio, duracion) => {
+    const diasTranscurridos = diasTranscurridosDesde(fechaInicio);
+
+    return diasTranscurridos + 1 > Number(duracion);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8">
-      <div className="mx-auto max-w-md space-y-6">
+      <div className="mx-auto max-w-6xl space-y-6">
         <header>
           <h1 className="text-2xl font-bold text-slate-800">Medicinas</h1>
+          <p className="text-sm text-slate-500">
+            Control de tratamientos y dosis
+          </p>
         </header>
 
-        <FormularioMedicina
-          datosFormulario={datosFormulario}
-          setDatosFormulario={setDatosFormulario}
-          onSubmit={agregarMedicina}
-        />
-
-        <section className="space-y-3">
-          {medicinas.map((medicina) => (
-            <TarjetaMedicina
-              key={medicina.id}
-              medicina={medicina}
-              onEliminar={eliminarMedicina}
-              onCambiarDosis={cambiarDosis}
-              onMarcarDosis={marcarDosis}
-              onEditarDosisCompletada={editarDosisCompletada}
+        <details className="group max-w-md rounded-xl bg-white shadow-sm ring-1 ring-slate-200 open:pb-2">
+          <summary className="cursor-pointer list-none px-5 py-4 text-sm font-medium text-slate-600 hover:text-slate-800">
+            <span className="mr-1 inline-block transition-transform group-open:rotate-90">
+              ›
+            </span>
+            {medicinas.length === 0
+              ? "Registrar tu primera medicina"
+              : "Agregar otra medicina"}
+          </summary>
+          <div className="px-5">
+            <FormularioMedicina
+              datosFormulario={datosFormulario}
+              setDatosFormulario={setDatosFormulario}
+              onSubmit={agregarMedicina}
+              fechaHoy={fechaHoy}
             />
-          ))}
-        </section>
+          </div>
+        </details>
+
+        {medicinas.length > 0 && (
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {medicinas.map((medicina) => (
+              <TarjetaMedicina
+                key={medicina.id}
+                medicina={medicina}
+                fechaHoy={fechaHoy}
+                onEliminar={eliminarMedicina}
+                onCambiarDosis={cambiarDosis}
+                onMarcarDosis={marcarDosis}
+                onEditarDosisCompletada={editarDosisCompletada}
+                calcularDiaTratamiento={calcularDiaTratamiento}
+                tratamientoCompletado={tratamientoCompletado}
+              />
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );
